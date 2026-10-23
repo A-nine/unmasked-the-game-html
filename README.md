@@ -54,5 +54,25 @@ The site is set up for https://unmasked.ng, served from the domain root.
 
 `.htaccess` forces `https://unmasked.ng` (no www), serves the custom `404.html`, allows clean URLs
 (`/about` as well as `/about.html`), and enables compression and caching.
+## Pre-launch waitlist (waitlist.unmasked.ng)
+
+`waitlist/` is a separate one-page site for the subdomain `waitlist.unmasked.ng`. Until launch, the
+PRE-LAUNCH block at the top of the main `.htaccess` sends every visit to unmasked.ng there (302, temporary).
+
+- Sign-ups are handled by `waitlist/subscribe.php` and saved to
+  `/home/<cpanel-user>/unmasked-waitlist-data/waitlist.csv` (outside the web folder). Download it from
+  File Manager. Each sign-up also emails hello@unmasked.ng and sends the person a confirmation;
+  both can be switched off at the top of `subscribe.php`.
+- Team preview of the real site before launch: open `https://unmasked.ng/?preview=<key>` (the key is in
+  `.htaccess`). That browser then sees the site for 30 days.
+
+**Launch day:** delete the PRE-LAUNCH block from the main `.htaccess`. Then replace the contents of the
+waitlist's `.htaccess` with the two lines below, so old waitlist links lead to the real site:
+
+```
+RewriteEngine On
+RewriteRule ^ https://unmasked.ng/ [R=301,L]
+```
+
 `404.html` uses root-relative links (`/…`), so it works at any depth. If the site ever moves to a
 sub-folder, update those links and the domain in `.htaccess`, canonical tags and `sitemap.xml`.

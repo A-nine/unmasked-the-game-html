@@ -1,0 +1,2 @@
+# Fallback storage for sign-ups. Never serve these files.
+Require all denied

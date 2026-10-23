@@ -7,8 +7,25 @@ DirectorySlash Off
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
+  # ==== PRE-LAUNCH: unmasked.ng shows the waitlist =====================================
+  # ON LAUNCH DAY, DELETE EVERYTHING FROM HERE TO "END PRE-LAUNCH" TO REVEAL THE SITE.
+  #
+  # Team preview: open https://unmasked.ng/?preview=2NLVmGNuqkEE once and this browser
+  # sees the real site for 30 days.
+  RewriteCond %{QUERY_STRING} (^|&)preview=2NLVmGNuqkEE(&|$)
+  RewriteRule ^ - [CO=unmasked_preview:2NLVmGNuqkEE:unmasked.ng:43200:/:1:1]
+
+  RewriteCond %{HTTP_HOST} ^(www\.)?unmasked\.ng$ [NC]
+  RewriteCond %{REQUEST_URI} !^/\.well-known/
+  RewriteCond %{QUERY_STRING} !(^|&)preview=2NLVmGNuqkEE(&|$)
+  RewriteCond %{HTTP_COOKIE} !(^|;\s*)unmasked_preview=2NLVmGNuqkEE
+  RewriteRule ^ https://waitlist.unmasked.ng/ [R=302,QSD,L]
+  # ==== END PRE-LAUNCH ================================================================
+
   # Send everyone to https://unmasked.ng (no www).
   # Only works once SSL is active: run AutoSSL in cPanel first.
+  RewriteCond %{HTTP_HOST} ^(www\.)?unmasked\.ng$ [NC]
+  RewriteCond %{REQUEST_URI} !^/\.well-known/
   RewriteCond %{HTTPS} off [OR]
   RewriteCond %{HTTP_HOST} ^www\. [NC]
   RewriteRule ^ https://unmasked.ng%{REQUEST_URI} [L,R=301]

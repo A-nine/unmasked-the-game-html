@@ -1,0 +1,50 @@
+/* Waitlist page — builds on styles.css */
+
+.site-header__bar > span { display: block; }
+
+/* Hero: copy left, sign-up card right */
+.wl-hero { display: grid; gap: 2.5rem; align-items: start; }
+@media (min-width: 1024px) {
+  .wl-hero { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 4rem; align-items: center; }
+}
+.wl-hero__copy { max-width: 40rem; }
+.wl-hero .hero__title { font-size: clamp(1.9rem, 10vw, 3rem); }
+@media (min-width: 768px) { .wl-hero .hero__title { font-size: 3.5rem; } }
+@media (min-width: 1024px) { .wl-hero .hero__title { font-size: 3rem; } }
+@media (min-width: 1280px) { .wl-hero .hero__title { font-size: 3.75rem; } }
+
+.wl-card {
+  border-radius: var(--radius-xl);
+  background: var(--offwhite);
+  color: var(--ink);
+  padding: 1.5rem;
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / .35);
+}
+@media (min-width: 640px) { .wl-card { padding: 2rem; } }
+.wl-card .h-display { color: var(--brown); }
+.wl-card .form-done { border: 0; background: none; padding: 0; }
+.wl-card .form-done[hidden] { display: none; }
+.wl-card .form-error { color: var(--harm); }
+
+/* Honeypot: hidden from people, visible to naive bots */
+.wl-hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+
+/* About: board beside the points */
+.wl-about { display: grid; gap: 2.5rem; align-items: center; }
+@media (min-width: 1024px) { .wl-about { grid-template-columns: 1fr 1fr; gap: 4rem; } }
+.wl-points { display: grid; gap: 1.5rem; }
+
+/* The board sits in the flow here, not hanging off the hero edge */
+/* the board is rotated 25°, so its corners poke ~16% past its box: leave room below it */
+.wl-board.hero-board { margin: 0 auto 4rem; }
+@media (min-width: 1024px) {
+  .wl-board.hero-board { position: relative; right: auto; top: auto; bottom: auto; width: 100%; max-width: 500px; margin: 0 auto; }
+  .wl-board .hero-board__stage { width: 100%; max-width: 460px; }
+}
+
+/* Footer */
+.wl-footer { position: relative; display: grid; gap: 2rem; padding-block: 3rem; }
+@media (min-width: 768px) { .wl-footer { grid-template-columns: 1fr 1fr 1.2fr; align-items: start; } }
+.wl-footer__contact { display: grid; gap: .5rem; }
+.wl-footer a:hover { text-decoration: underline; }
+.wl-footer__safety { opacity: .8; }
