@@ -63,6 +63,10 @@ PRE-LAUNCH block at the top of the main `.htaccess` sends every visit to unmaske
   `/home/<cpanel-user>/unmasked-waitlist-data/waitlist.csv` (outside the web folder). Download it from
   File Manager. Each sign-up also emails hello@unmasked.ng and sends the person a confirmation;
   both can be switched off at the top of `subscribe.php`.
+- Email is sent through the `no-reply@unmasked.ng` mailbox over authenticated SMTP. Its settings live in
+  `waitlist/mail-config.php` on the server only (copy `mail-config.example.php` and add the mailbox
+  password; the real file is git-ignored and blocked from the web). Every send is logged, with the mail
+  server's reply on failure, in `unmasked-waitlist-data/mail-log.txt`.
 - Team preview of the real site before launch: open `https://unmasked.ng/?preview=<key>` (the key is in
   `.htaccess`). That browser then sees the site for 30 days.
 

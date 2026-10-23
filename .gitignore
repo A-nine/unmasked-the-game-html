@@ -1,1 +1,4 @@
 .DS_Store
+
+# real mailbox password lives only on the server
+waitlist/mail-config.php

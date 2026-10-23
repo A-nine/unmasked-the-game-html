@@ -176,29 +176,118 @@ fclose($fh);
 
 // ---- emails (failures here never block the sign-up)
 
-// Sends with the envelope sender set to our own domain (-f) so receiving servers accept it,
-// and records every attempt in mail-log.txt next to waitlist.csv for troubleshooting.
+// Reads one SMTP reply (which may span several lines) and returns [code, text]
+function smtp_read($sock): array
+{
+    $text = '';
+    while (($line = fgets($sock, 1024)) !== false) {
+        $text .= $line;
+        if (strlen($line) < 4 || $line[3] === ' ') break;
+    }
+    return [(int)substr($text, 0, 3), trim($text)];
+}
+
+// Sends one command and checks the reply code; throws with the server's answer if it is unexpected
+function smtp_cmd($sock, ?string $cmd, array $expect, ?string $logAs = null): void
+{
+    if ($cmd !== null) fwrite($sock, $cmd . "\r\n");
+    [$code, $text] = smtp_read($sock);
+    if (!in_array($code, $expect, true)) {
+        throw new RuntimeException(($logAs ?? strtok((string)$cmd, ' ') ?: 'CONNECT') . " -> $text");
+    }
+}
+
+// Sends through the mailbox in mail-config.php (authenticated SMTP, like an email app does)
+function smtp_send(array $cfg, string $to, string $message): void
+{
+    $port = (int)$cfg['port'];
+    $ssl  = ($cfg['encryption'] ?? ($port === 465 ? 'ssl' : 'tls')) === 'ssl';
+    $ctx = stream_context_create(['ssl' => [
+        'verify_peer' => (bool)$cfg['verify_certificate'],
+        'verify_peer_name' => (bool)$cfg['verify_certificate'],
+        'peer_name' => $cfg['host'],
+    ]]);
+    $remote = ($ssl ? 'ssl://' : 'tcp://') . $cfg['host'] . ':' . $port;
+    $warning = '';
+    set_error_handler(function ($no, $msg) use (&$warning) { $warning .= ' ' . preg_replace('/^stream_socket_client\(\): /', '', $msg); return true; });
+    $sock = stream_socket_client($remote, $errno, $errstr, 15, STREAM_CLIENT_CONNECT, $ctx);
+    restore_error_handler();
+    if (!$sock) {
+        $hint = stripos($warning, 'certificate') !== false ? ' [certificate problem: try verify_certificate => false]' : '';
+        throw new RuntimeException("cannot connect to $remote: " . trim(($errstr ?: '') . $warning) . $hint);
+    }
+    stream_set_timeout($sock, 15);
+
+    try {
+        smtp_cmd($sock, null, [220]);
+        smtp_cmd($sock, 'EHLO unmasked.ng', [250]);
+        if (!$ssl) {
+            smtp_cmd($sock, 'STARTTLS', [220]);
+            if (!stream_socket_enable_crypto($sock, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+                throw new RuntimeException('STARTTLS -> could not start encryption');
+            }
+            smtp_cmd($sock, 'EHLO unmasked.ng', [250]);
+        }
+        smtp_cmd($sock, 'AUTH LOGIN', [334]);
+        smtp_cmd($sock, base64_encode($cfg['username']), [334], 'AUTH username');
+        smtp_cmd($sock, base64_encode($cfg['password']), [235], 'AUTH password');
+        smtp_cmd($sock, 'MAIL FROM:<' . FROM_EMAIL . '>', [250]);
+        smtp_cmd($sock, "RCPT TO:<$to>", [250, 251]);
+        smtp_cmd($sock, 'DATA', [354]);
+        // a line starting with "." would end the message early, so double it
+        fwrite($sock, preg_replace('/^\./m', '..', $message) . "\r\n.\r\n");
+        smtp_cmd($sock, null, [250], 'DATA end');
+        fwrite($sock, "QUIT\r\n");
+    } finally {
+        fclose($sock);
+    }
+}
+
+function mail_config(): ?array
+{
+    $file = __DIR__ . '/mail-config.php';
+    $cfg = is_file($file) ? include $file : null;
+    if (!is_array($cfg) || empty($cfg['password']) || strpos($cfg['password'], 'PUT-THE') === 0) return null;
+    return $cfg + ['port' => 465, 'verify_certificate' => true];
+}
+
+// Sends one email (SMTP if mail-config.php is filled in, otherwise PHP mail())
+// and records the outcome in mail-log.txt next to waitlist.csv.
 function send_mail(string $dir, string $to, string $subject, string $body): void
 {
+    $subject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
     $headers = "From: Unmasked <" . FROM_EMAIL . ">\r\n"
         . "Reply-To: " . TEAM_EMAIL . "\r\n"
         . "MIME-Version: 1.0\r\n"
         . "Content-Type: text/plain; charset=utf-8\r\n"
-        . "Content-Transfer-Encoding: 8bit";
-    $subject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
+        . "Content-Transfer-Encoding: quoted-printable";
+    $body = quoted_printable_encode(str_replace("\n", "\r\n", $body));
 
+    $cfg = mail_config();
+    $via = $cfg ? 'SMTP' : 'mail()';
     $error = '';
-    if (!function_exists('mail')) {
-        $ok = false;
-        $error = 'mail() is disabled on this server';
-    } else {
-        set_error_handler(function ($no, $msg) use (&$error) { $error = $msg; return true; });
-        $ok = mail($to, $subject, $body, $headers, '-f' . FROM_EMAIL);
-        restore_error_handler();
+    try {
+        if ($cfg) {
+            $message = "Date: " . date('r') . "\r\n"
+                . "Message-ID: <" . bin2hex(random_bytes(12)) . "@unmasked.ng>\r\n"
+                . "To: <$to>\r\nSubject: $subject\r\n$headers\r\n\r\n$body";
+            smtp_send($cfg, $to, $message);
+        } elseif (!function_exists('mail')) {
+            throw new RuntimeException('mail() is disabled on this server; fill in mail-config.php');
+        } else {
+            set_error_handler(function ($no, $msg) use (&$error) { $error = $msg; return true; });
+            $ok = mail($to, $subject, $body, $headers, '-f' . FROM_EMAIL);
+            restore_error_handler();
+            if (!$ok) throw new RuntimeException($error ?: 'mail() returned false; fill in mail-config.php to use SMTP');
+        }
+        $status = 'SENT';
+    } catch (Throwable $e) {
+        $status = 'FAILED';
+        $error = $e->getMessage();
     }
     file_put_contents($dir . '/mail-log.txt',
-        date('Y-m-d H:i') . "  " . ($ok ? 'HANDED TO MAIL SERVER' : 'FAILED') . "  to $to"
-        . ($error ? "  ($error)" : '') . "\n", FILE_APPEND | LOCK_EX);
+        date('Y-m-d H:i') . "  $status via $via  to $to" . ($status === 'FAILED' ? "  ($error)" : '') . "\n",
+        FILE_APPEND | LOCK_EX);
 }
 
 if (!$already) {
