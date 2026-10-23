@@ -175,22 +175,44 @@ flock($fh, LOCK_UN);
 fclose($fh);
 
 // ---- emails (failures here never block the sign-up)
-if (!$already) {
-    $headers = "From: Unmasked <" . FROM_EMAIL . ">\r\nReply-To: " . TEAM_EMAIL . "\r\nContent-Type: text/plain; charset=utf-8";
 
+// Sends with the envelope sender set to our own domain (-f) so receiving servers accept it,
+// and records every attempt in mail-log.txt next to waitlist.csv for troubleshooting.
+function send_mail(string $dir, string $to, string $subject, string $body): void
+{
+    $headers = "From: Unmasked <" . FROM_EMAIL . ">\r\n"
+        . "Reply-To: " . TEAM_EMAIL . "\r\n"
+        . "MIME-Version: 1.0\r\n"
+        . "Content-Type: text/plain; charset=utf-8\r\n"
+        . "Content-Transfer-Encoding: 8bit";
+    $subject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
+
+    $error = '';
+    if (!function_exists('mail')) {
+        $ok = false;
+        $error = 'mail() is disabled on this server';
+    } else {
+        set_error_handler(function ($no, $msg) use (&$error) { $error = $msg; return true; });
+        $ok = mail($to, $subject, $body, $headers, '-f' . FROM_EMAIL);
+        restore_error_handler();
+    }
+    file_put_contents($dir . '/mail-log.txt',
+        date('Y-m-d H:i') . "  " . ($ok ? 'HANDED TO MAIL SERVER' : 'FAILED') . "  to $to"
+        . ($error ? "  ($error)" : '') . "\n", FILE_APPEND | LOCK_EX);
+}
+
+if (!$already) {
     if (NOTIFY_TEAM) {
-        @mail(TEAM_EMAIL, 'New waitlist sign-up',
-            "Name: $name\nEmail: $email\nWhatsApp: " . ($phone ?: '-') . "\nState: $state\nInterested as: $interest\n",
-            $headers);
+        send_mail($dir, TEAM_EMAIL, 'New waitlist sign-up',
+            "Name: $name\nEmail: $email\nWhatsApp: " . ($phone ?: '-') . "\nState: $state\nInterested as: $interest\n");
     }
     if (CONFIRM_SIGNUP) {
-        @mail($email, "You're on the Unmasked waitlist",
+        send_mail($dir, $email, "You're on the Unmasked waitlist",
             "Hi $name,\n\nThank you for joining the Unmasked waitlist. We'll email you on launch day, and when sessions open near you.\n\n"
             . "What cannot be named cannot be challenged. Unmasked gives communities the language.\n\n"
             . "If you didn't sign up, reply to this email and we'll remove your details.\n\n"
             . "Unmasked\nhttps://unmasked.ng\n\n"
-            . "Unmasked is an education programme, not a crisis service. If you or someone you know is in immediate danger, call 112.\n",
-            $headers);
+            . "Unmasked is an education programme, not a crisis service. If you or someone you know is in immediate danger, call 112.\n");
     }
 }
 
