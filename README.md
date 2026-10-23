@@ -43,7 +43,16 @@ To collect submissions directly instead, create a form endpoint (e.g. Formspree)
 
 The script then POSTs the form there and shows the confirmation message.
 
-## Deploying
+## Deploying (cPanel)
 
-The 404 page uses absolute links rooted at `/unmasked-the-game-html/` (the GitHub Pages project path).
-If you host the site at a domain root (e.g. unmasked.ng), change those links in `404.html` to `/`.
+The site is set up for https://unmasked.ng, served from the domain root.
+
+1. In cPanel, run **Security → SSL/TLS Status → Run AutoSSL** so HTTPS works.
+2. Upload `unmasked-site.zip` (or the folder contents) to `public_html` and extract it there, so
+   `index.html` and `.htaccess` sit directly inside `public_html`.
+3. Create the `hello@unmasked.ng` mailbox under **Email Accounts**; the forms address it.
+
+`.htaccess` forces `https://unmasked.ng` (no www), serves the custom `404.html`, allows clean URLs
+(`/about` as well as `/about.html`), and enables compression and caching.
+`404.html` uses root-relative links (`/…`), so it works at any depth. If the site ever moves to a
+sub-folder, update those links and the domain in `.htaccess`, canonical tags and `sitemap.xml`.

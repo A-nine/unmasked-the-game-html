@@ -1,0 +1,48 @@
+# Unmasked — Apache / cPanel configuration
+
+ErrorDocument 404 /404.html
+Options -Indexes
+DirectorySlash Off
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Send everyone to https://unmasked.ng (no www).
+  # Only works once SSL is active: run AutoSSL in cPanel first.
+  RewriteCond %{HTTPS} off [OR]
+  RewriteCond %{HTTP_HOST} ^www\. [NC]
+  RewriteRule ^ https://unmasked.ng%{REQUEST_URI} [L,R=301]
+
+  # Drop trailing slashes (/about/ -> /about) so relative links on the page resolve correctly
+  RewriteRule ^(.+)/$ /$1 [L,R=301]
+
+  # /tactics is both a page and a folder; serve the page
+  RewriteRule ^tactics$ tactics.html [L]
+
+  # Clean URLs: /about serves about.html, /tactics/gaslighting serves tactics/gaslighting.html
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME}.html -f
+  RewriteRule ^(.+?)/?$ $1.html [L]
+</IfModule>
+
+# Keep the support directory out of search results (it is also marked noindex in the page)
+<IfModule mod_headers.c>
+  <Files "find-help.html">
+    Header set X-Robots-Tag "noindex, nofollow"
+  </Files>
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript image/svg+xml
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/html "access plus 0 seconds"
+  ExpiresByType text/css "access plus 1 week"
+  ExpiresByType application/javascript "access plus 1 week"
+  ExpiresByType image/png "access plus 1 month"
+  ExpiresByType image/jpeg "access plus 1 month"
+  ExpiresByType image/x-icon "access plus 1 month"
+</IfModule>
