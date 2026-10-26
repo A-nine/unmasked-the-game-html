@@ -46,6 +46,7 @@ body {
 h1, h2, h3, h4, p, ol, ul, dl, dd, figure { margin: 0; }
 ol, ul { list-style: none; padding: 0; }
 img, svg { display: block; max-width: 100%; }
+img { height: auto; } /* width/height attributes reserve space; CSS still sizes the image */
 a { color: inherit; text-decoration: none; }
 button, input, select, textarea { font: inherit; color: inherit; margin: 0; }
 button { background: none; cursor: pointer; padding: 0; }
@@ -301,7 +302,7 @@ button { background: none; cursor: pointer; padding: 0; }
   .safety-popup { left: auto; right: 1.25rem; bottom: auto; top: 5rem; max-width: 24rem; margin: 0; }
 }
 .safety-popup__head { display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; }
-.safety-popup h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.25rem; line-height: 1.2; letter-spacing: .03em; text-transform: uppercase; }
+.safety-popup .safety-popup__title { margin-top: 0; opacity: 1; font-family: var(--font-display); font-weight: 400; font-size: 1.25rem; line-height: 1.2; letter-spacing: .03em; text-transform: uppercase; }
 .safety-popup p { margin-top: .75rem; font-size: .75rem; line-height: 1.6; opacity: .9; }
 .safety-popup p + p { margin-top: .5rem; }
 .safety-popup__x { font-size: .75rem; padding: .25rem; border-radius: 6px; opacity: .75; }
@@ -325,7 +326,9 @@ button { background: none; cursor: pointer; padding: 0; }
   /* scales with the viewport on phones so the two fixed lines never overflow */
   font-size: clamp(1.9rem, 10vw, 3rem);
 }
-.hero__title span { display: block; white-space: nowrap; }
+.hero__title span { display: block; }
+/* one line per phrase once there is room; on phones a slow-loading font may wrap instead of being clipped */
+@media (min-width: 480px) { .hero__title span { white-space: nowrap; } }
 @media (min-width: 768px) { .hero__title { font-size: 3.75rem; } }
 @media (min-width: 1024px) {
   .hero__grid { grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 3rem; }
@@ -402,7 +405,7 @@ button { background: none; cursor: pointer; padding: 0; }
   padding: 1.25rem; transition: background-color .15s;
 }
 .tile:hover, .tile:focus-visible { background: color-mix(in srgb, var(--offwhite) 10%, transparent); }
-.tile__name { margin-top: .5rem; font-family: var(--font-display); font-size: 1.5rem; line-height: 1.2; text-transform: uppercase; }
+.tile__name { margin-top: .5rem; font-weight: 400; font-family: var(--font-display); font-size: 1.5rem; line-height: 1.2; text-transform: uppercase; }
 .tile__line { margin-top: .5rem; font-size: .875rem; opacity: 0; transition: opacity .2s; }
 .tile:hover .tile__line, .tile:focus-visible .tile__line { opacity: .8; }
 /* Touch screens have no hover, so always show the one-liner there */
@@ -438,6 +441,26 @@ button { background: none; cursor: pointer; padding: 0; }
 }
 .chip:hover { background: var(--offwhite); }
 .chip span { font-family: var(--font-display); font-size: 1.125rem; font-weight: 400; color: var(--clay); }
+
+/* ---------- Page H1: small label + brand headline in one heading ---------- */
+.hero-h1 { margin: 0; font: inherit; }
+.hero-h1 > span { display: block; }
+
+/* ---------- Breadcrumbs ---------- */
+.crumbs ol { display: flex; flex-wrap: wrap; gap: .25rem .5rem; margin-bottom: 1.5rem; font-size: .75rem; line-height: 1.4; opacity: .8; }
+.crumbs li + li::before { content: "›"; margin-right: .5rem; opacity: .7; }
+.crumbs a { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: color-mix(in srgb, currentColor 40%, transparent); }
+.crumbs a:hover { text-decoration-color: currentColor; }
+.crumbs [aria-current] { font-weight: 600; }
+
+/* ---------- FAQ ---------- */
+.faq { border-bottom: 1px solid var(--border); }
+.faq__item { border-top: 1px solid var(--border); }
+.faq__item summary { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.25rem 0; cursor: pointer; list-style: none; }
+.faq__item summary::-webkit-details-marker { display: none; }
+.faq__item summary::after { content: "+"; flex-shrink: 0; font-size: 1.5rem; line-height: 1; color: var(--clay); }
+.faq__item[open] summary::after { content: "–"; }
+.faq__item p { max-width: 44rem; padding-bottom: 1.25rem; }
 
 /* ---------- Badges ---------- */
 .badge { border-radius: var(--radius-md); padding: .25rem .75rem; font-size: .75rem; font-weight: 600; letter-spacing: .025em; text-transform: uppercase; white-space: nowrap; }

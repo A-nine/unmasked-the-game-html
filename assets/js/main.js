@@ -95,10 +95,10 @@
   if (stage) {
     var img = root + "assets/img/";
     var pool = [
-      { src: "card-back.png", alt: "", weight: 65 },
-      { src: "card-front-92.png", alt: "", weight: 12 },
-      { src: "card-front-01.png", alt: "", weight: 12 },
-      { src: "card-front-08.png", alt: "", weight: 11 }
+      { src: "card-back.webp", alt: "", weight: 65 },
+      { src: "card-front-92.webp", alt: "", weight: 12 },
+      { src: "card-front-01.webp", alt: "", weight: 12 },
+      { src: "card-front-08.webp", alt: "", weight: 11 }
     ];
     var pick = function () {
       var r = Math.random() * 100, sum = 0;
@@ -115,6 +115,8 @@
       var el = document.createElement("img");
       el.src = img + src;
       el.alt = "";
+      el.width = 249;
+      el.height = 400;
       el.decoding = "async";
       wrap.appendChild(el);
       stage.appendChild(wrap);
@@ -123,10 +125,10 @@
     };
 
     // Resting cards matching the printed board scatter
-    addCard("card-front-92.png", 23, 9, -15, -10);
-    addCard("card-back.png", 30, 38, -30, -27);
-    addCard("card-front-01.png", 20, 54, -45, -40);
-    addCard("card-front-08.png", 46, 76, 15, 7);
+    addCard("card-front-92.webp", 23, 9, -15, -10);
+    addCard("card-back.webp", 30, 38, -30, -27);
+    addCard("card-front-01.webp", 20, 54, -45, -40);
+    addCard("card-front-08.webp", 46, 76, 15, 7);
 
     var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     var visible = true;

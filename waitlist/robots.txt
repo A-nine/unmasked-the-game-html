@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /thanks.html
+Disallow: /subscribe.php
+Disallow: /data/
+
+Sitemap: https://waitlist.unmasked.ng/sitemap.xml

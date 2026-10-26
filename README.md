@@ -80,3 +80,15 @@ RewriteRule ^ https://unmasked.ng/ [R=301,L]
 
 `404.html` uses root-relative links (`/…`), so it works at any depth. If the site ever moves to a
 sub-folder, update those links and the domain in `.htaccess`, canonical tags and `sitemap.xml`.
+
+## SEO
+
+Every page has a unique title (50–60 characters) and description (150–160), canonical URL, Open Graph and
+Twitter tags, one H1, and JSON-LD structured data (Organization, WebSite, WebPage types, BreadcrumbList with
+a visible breadcrumb, FAQPage for the visible FAQs on Home, Programme and the waitlist, Service, Person,
+and DefinedTerm for each tactic). Images are WebP with explicit sizes. `sitemap.xml` and `robots.txt` exist
+for both unmasked.ng and waitlist.unmasked.ng.
+
+When you change copy, keep each page's title and description within those lengths, update `lastmod` in the
+sitemap, and resubmit it in Google Search Console.
+

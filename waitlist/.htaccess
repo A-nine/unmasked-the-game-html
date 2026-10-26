@@ -13,7 +13,7 @@ ErrorDocument 404 /index.html
 </IfModule>
 
 # Never serve stored sign-ups or rate-limit data, wherever they end up
-<FilesMatch "(\.(csv|json|txt)|^mail-config.*\.php)$">
+<FilesMatch "(\.(csv|json)|^mail-log\.txt|^mail-config.*\.php)$">
   Require all denied
 </FilesMatch>
 
